@@ -1,0 +1,987 @@
+<!doctype html>
+<html lang="bs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<title>ShoppingCart</title>
+<meta name="description" content="Porodična lista za kupovinu">
+<meta name="theme-color" content="#f5f3ee" id="themeColor">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ShoppingCart">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f3ee; --surface:#ffffff; --surface-2:#eeebe3; --text:#1c1b18; --muted:#78746a;
+  --line:#e5e1d7; --accent:#1d7a55; --accent-ink:#ffffff; --accent-soft:#dcefe4;
+  --danger:#c2412d; --danger-soft:#f8e1dc; --shadow:0 1px 2px rgba(28,27,24,.05),0 6px 20px rgba(28,27,24,.06);
+  --radius:16px; --nav-h:64px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111311; --surface:#1a1d1a; --surface-2:#242824; --text:#ecebe5; --muted:#999c93;
+    --line:#2b302b; --accent:#4cc38a; --accent-ink:#0a1a11; --accent-soft:#1c3628;
+    --danger:#ef6a55; --danger-soft:#3a1f1a; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111311; --surface:#1a1d1a; --surface-2:#242824; --text:#ecebe5; --muted:#999c93;
+  --line:#2b302b; --accent:#4cc38a; --accent-ink:#0a1a11; --accent-soft:#1c3628;
+  --danger:#ef6a55; --danger-soft:#3a1f1a; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text)}
+body{font-family:Figtree,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.4;
+  min-height:100dvh;overscroll-behavior-y:contain;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+[hidden]{display:none!important}
+
+.wrap{max-width:640px;margin:0 auto;padding:0 16px}
+
+/* Header */
+.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);
+  padding-top:env(safe-area-inset-top)}
+.bar{display:flex;align-items:center;gap:12px;padding:14px 0 8px}
+.logo{width:40px;height:40px;border-radius:12px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;flex:none}
+.logo svg{width:22px;height:22px}
+.title{flex:1;min-width:0}
+.title h1{margin:0;font-size:21px;font-weight:800;letter-spacing:-.02em}
+.title p{margin:0;font-size:13.5px;color:var(--muted)}
+.iconbtn{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:var(--text);background:var(--surface);box-shadow:var(--shadow)}
+.iconbtn:active{transform:scale(.95)}
+.pill-off{font-size:12px;font-weight:700;padding:4px 9px;border-radius:99px;background:var(--danger-soft);color:var(--danger)}
+
+/* List chips */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:6px 0 12px;scrollbar-width:none;margin:0 -16px;padding-left:16px;padding-right:16px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;border-radius:99px;background:var(--surface);
+  border:1px solid var(--line);font-weight:600;font-size:15px;color:var(--text);transition:background .15s,color .15s}
+.chip .n{min-width:22px;height:22px;padding:0 6px;border-radius:99px;background:var(--surface-2);font-size:12.5px;font-weight:700;display:grid;place-items:center;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--text);color:var(--bg);border-color:var(--text)}
+.chip[aria-pressed="true"] .n{background:var(--accent);color:var(--accent-ink)}
+.chip.add{width:40px;padding:0;justify-content:center;color:var(--muted)}
+.chip.add svg{width:18px;height:18px}
+
+/* Add form */
+.add{display:flex;gap:8px;margin:4px 0 18px}
+.add input{flex:1;min-width:0;height:52px;padding:0 16px;border-radius:var(--radius);border:1px solid var(--line);background:var(--surface);
+  box-shadow:var(--shadow);outline:none;font-size:16.5px}
+.add input:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.add input::placeholder{color:var(--muted)}
+.add button{width:52px;height:52px;border-radius:var(--radius);background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;flex:none}
+.add button:active{transform:scale(.95)}
+
+main{padding-bottom:calc(var(--nav-h) + 28px + env(safe-area-inset-bottom))}
+
+/* Groups */
+.group{margin-bottom:16px}
+.ghead{display:flex;align-items:center;gap:8px;padding:0 4px 8px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.ghead .e{font-size:16px;letter-spacing:0}
+.ghead .c{margin-left:auto;font-weight:600}
+.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;list-style:none;margin:0;padding:0}
+.item{display:flex;align-items:center;gap:12px;padding:0 14px 0 6px;min-height:58px;border-top:1px solid var(--line);transition:opacity .3s,background .2s}
+.item:first-child{border-top:0}
+.check{width:44px;height:44px;display:grid;place-items:center;flex:none}
+.check span{width:26px;height:26px;border-radius:50%;border:2px solid color-mix(in srgb,var(--muted) 60%,transparent);display:grid;place-items:center;transition:all .2s}
+.check svg{width:15px;height:15px;stroke-width:3;stroke:var(--accent-ink);opacity:0;transform:scale(.5);transition:all .2s}
+.item.on .check span,.item.checking .check span{background:var(--accent);border-color:var(--accent)}
+.item.on .check svg,.item.checking .check svg{opacity:1;transform:scale(1)}
+.item.checking{opacity:.45}
+.body{flex:1;min-width:0;padding:10px 0;text-align:left;display:block}
+.name{display:block;font-weight:600;font-size:16.5px;overflow-wrap:anywhere}
+.meta{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.qty{flex:none;font-weight:700;font-size:14px;padding:4px 10px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
+.item.on .name{text-decoration:line-through;text-decoration-thickness:1.5px;color:var(--muted)}
+.item.on .qty{background:var(--surface-2);color:var(--muted)}
+
+/* Done section */
+.done{margin-top:26px}
+.donehead{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.donehead .toggle{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:var(--muted);padding:8px 4px}
+.donehead .toggle svg{width:18px;height:18px;transition:transform .2s}
+.done.closed .toggle svg{transform:rotate(-90deg)}
+.done.closed .card{display:none}
+.textbtn{margin-left:auto;font-weight:700;font-size:14px;color:var(--danger);padding:8px 12px;border-radius:10px;background:var(--danger-soft)}
+
+/* Empty */
+.empty{text-align:center;padding:44px 20px;color:var(--muted)}
+.empty .big{width:72px;height:72px;margin:0 auto 14px;border-radius:24px;background:var(--surface);box-shadow:var(--shadow);display:grid;place-items:center;color:var(--accent)}
+.empty .big svg{width:34px;height:34px}
+.empty h3{margin:0 0 4px;color:var(--text);font-size:18px}
+.empty p{margin:0;font-size:14.5px}
+.loading{padding:40px 0;text-align:center;color:var(--muted)}
+
+/* Receipts */
+.rhead{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:6px 0 16px}
+.rhead h2{margin:0;font-size:24px;font-weight:800;letter-spacing:-.02em}
+.rhead p{margin:2px 0 0;color:var(--muted);font-size:14px}
+.month{margin:18px 4px 10px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.rcard{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;text-align:left;display:block;width:100%}
+.rcard .ph{aspect-ratio:3/4;background:var(--surface-2) center/cover no-repeat}
+.rcard .rb{padding:10px 12px 12px}
+.rcard .rt{font-weight:700;font-size:15px;display:flex;justify-content:space-between;gap:6px}
+.rcard .rs{font-size:12.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fab{position:fixed;right:max(16px,calc(50% - 304px));bottom:calc(var(--nav-h) + 16px + env(safe-area-inset-bottom));z-index:15;
+  height:56px;padding:0 22px 0 18px;border-radius:20px;background:var(--accent);color:var(--accent-ink);font-weight:700;
+  display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px color-mix(in srgb,var(--accent) 40%,transparent)}
+.fab:active{transform:scale(.96)}
+
+/* Bottom nav */
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:20;background:color-mix(in srgb,var(--surface) 92%,transparent);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.nav .wrap{display:flex;height:var(--nav-h)}
+.nav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12px;font-weight:600;color:var(--muted)}
+.nav button[aria-current="page"]{color:var(--accent)}
+.nav button[aria-current="page"] svg{stroke-width:2.4}
+
+/* Sheets (dialog) */
+dialog{border:0;padding:0;background:transparent;color:var(--text);max-width:none;max-height:none;width:100%;height:100%;margin:0}
+dialog::backdrop{background:rgba(8,10,8,.5);backdrop-filter:blur(2px)}
+dialog[open]{display:flex;align-items:flex-end;justify-content:center}
+.sheet{width:100%;max-width:560px;max-height:92dvh;overflow:auto;background:var(--surface);border-radius:24px 24px 0 0;
+  padding:10px 20px calc(20px + env(safe-area-inset-bottom));animation:up .25s cubic-bezier(.2,.8,.2,1)}
+@keyframes up{from{transform:translateY(40px);opacity:0}}
+@media (min-width:600px){dialog[open]{align-items:center}.sheet{border-radius:24px;padding-bottom:20px}}
+.grab{width:40px;height:5px;border-radius:9px;background:var(--line);margin:0 auto 14px}
+.sheet h2{margin:0 0 16px;font-size:20px;font-weight:800;letter-spacing:-.01em}
+.field{display:block;margin-bottom:14px}
+.field>span{display:block;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:6px}
+.inp{width:100%;height:50px;padding:0 14px;border-radius:14px;border:1px solid var(--line);background:var(--bg);outline:none;font-size:16px}
+.inp:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+select.inp{appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:calc(100% - 20px) 22px,calc(100% - 15px) 22px;background-size:5px 5px;background-repeat:no-repeat;padding-right:36px}
+.row{display:flex;gap:10px}
+.row>*{flex:1;min-width:0}
+.stepper{display:flex;align-items:center;height:50px;border-radius:14px;border:1px solid var(--line);background:var(--bg);overflow:hidden}
+.stepper button{width:48px;height:100%;display:grid;place-items:center;color:var(--accent)}
+.stepper input{flex:1;min-width:0;text-align:center;border:0;background:none;outline:none;font-weight:700;font-size:17px}
+.actions{display:flex;gap:10px;margin-top:20px}
+.btn{height:52px;border-radius:14px;font-weight:700;font-size:16px;padding:0 18px;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn.primary{flex:1;background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:var(--surface-2)}
+.btn.danger{background:var(--danger-soft);color:var(--danger)}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.5}
+.seg{display:flex;background:var(--surface-2);border-radius:14px;padding:4px;gap:4px}
+.seg button{flex:1;height:42px;border-radius:11px;font-weight:600;font-size:14.5px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+.lrow{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line)}
+.lrow .ln{flex:1;font-weight:600}
+.lrow .lc{color:var(--muted);font-size:13px}
+.lrow button{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;color:var(--danger)}
+.lrow button svg{width:19px;height:19px}
+.addlist{display:flex;gap:8px;margin-top:12px}
+.addlist .inp{flex:1}
+.addlist .btn{width:50px;height:50px;padding:0;background:var(--accent);color:var(--accent-ink)}
+.hint{font-size:13.5px;color:var(--muted);margin:6px 0 0}
+.sec{margin-top:22px}
+.sec>h3{margin:0 0 10px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.preview{width:100%;max-height:40dvh;object-fit:contain;border-radius:14px;background:var(--bg);display:block;margin-bottom:16px}
+
+/* Viewer */
+#viewer .sheet{max-width:720px;padding:0;background:#000;color:#fff;height:100dvh;max-height:100dvh;border-radius:0;display:flex;flex-direction:column}
+.vtop{display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 12px 10px}
+.vtop .t{flex:1;min-width:0}
+.vtop .t b{display:block;font-size:16px}
+.vtop .t span{font-size:13px;opacity:.7}
+.vbtn{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.12);color:#fff}
+.vimg{flex:1;min-height:0;overflow:auto;display:flex;align-items:center;justify-content:center;touch-action:pinch-zoom}
+.vimg img{max-width:100%;max-height:100%;object-fit:contain}
+.vnote{padding:10px 16px calc(14px + env(safe-area-inset-bottom));font-size:14.5px;opacity:.85}
+
+/* Toast */
+.toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + 16px + env(safe-area-inset-bottom));transform:translate(-50%,20px);opacity:0;pointer-events:none;
+  z-index:50;background:var(--text);color:var(--bg);padding:12px 12px 12px 18px;border-radius:14px;display:flex;align-items:center;gap:14px;
+  font-weight:600;font-size:15px;transition:all .25s;max-width:calc(100% - 32px);box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.toast.show{transform:translate(-50%,0);opacity:1;pointer-events:auto}
+.toast button{font-weight:800;color:var(--accent);padding:6px 10px;border-radius:8px;filter:brightness(1.15)}
+:root[data-theme="dark"] .toast button{filter:none}
+
+.banner{margin:0 0 14px;padding:12px 14px;border-radius:14px;background:var(--danger-soft);color:var(--danger);font-size:14px;font-weight:600}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-cart" viewBox="0 0 24 24"><path d="M2 3h3l2.4 11.2a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.5-1.1L21 7H6"/><circle cx="9.5" cy="20" r="1.4"/><circle cx="17.5" cy="20" r="1.4"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h1.8l1.5-2h6.4l1.5 2h1.8A2.5 2.5 0 0 1 21 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/><circle cx="12" cy="13" r="3.6"/></symbol>
+  <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M5 3h14v18l-2.3-1.5L14.3 21 12 19.5 9.7 21l-2.4-1.5L5 21z"/><path d="M9 8h6M9 12h6M9 16h3"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3.5 6 1 1 2-2M3.5 12l1 1 2-2M3.5 18l1 1 2-2"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+</svg>
+
+<header class="top">
+  <div class="wrap">
+    <div class="bar">
+      <div class="logo"><svg class="i"><use href="#i-cart"/></svg></div>
+      <div class="title">
+        <h1>ShoppingCart</h1>
+        <p id="subtitle">Učitavam…</p>
+      </div>
+      <span class="pill-off" id="offline" hidden>Offline</span>
+      <button class="iconbtn" id="btnSettings" aria-label="Postavke"><svg class="i"><use href="#i-gear"/></svg></button>
+    </div>
+    <nav class="chips" id="chips" aria-label="Liste"></nav>
+  </div>
+</header>
+
+<main id="viewList" class="wrap">
+  <div id="banner" class="banner" hidden></div>
+  <form class="add" id="addForm" autocomplete="off">
+    <input id="addInput" enterkeyhint="done" placeholder="Dodaj artikal, npr. mlijeko 2" aria-label="Novi artikal" list="suggest">
+    <button type="submit" aria-label="Dodaj"><svg class="i"><use href="#i-plus"/></svg></button>
+  </form>
+  <datalist id="suggest"></datalist>
+  <div id="groups"><div class="loading">Učitavam listu…</div></div>
+  <section class="done" id="doneSec" hidden>
+    <div class="donehead">
+      <button class="toggle" id="doneToggle"><svg class="i"><use href="#i-down"/></svg><span id="doneTitle">U korpi</span></button>
+      <button class="textbtn" id="clearDone">Očisti korpu</button>
+    </div>
+    <ul class="card" id="doneList"></ul>
+  </section>
+</main>
+
+<main id="viewReceipts" class="wrap" hidden>
+  <div class="rhead">
+    <div>
+      <h2>Računi</h2>
+      <p id="rsummary"></p>
+    </div>
+  </div>
+  <div id="receipts"></div>
+</main>
+
+<button class="fab" id="fab" hidden><svg class="i"><use href="#i-camera"/></svg>Uslikaj račun</button>
+<input type="file" id="camInput" accept="image/*" capture="environment" hidden>
+
+<nav class="nav">
+  <div class="wrap">
+    <button id="navList" aria-current="page"><svg class="i"><use href="#i-list"/></svg>Lista</button>
+    <button id="navReceipts"><svg class="i"><use href="#i-receipt"/></svg>Računi</button>
+  </div>
+</nav>
+
+<!-- Uredi artikal -->
+<dialog id="editDlg">
+  <form class="sheet" method="dialog" id="editForm">
+    <div class="grab"></div>
+    <h2>Uredi artikal</h2>
+    <label class="field"><span>Naziv</span><input class="inp" id="eName" required></label>
+    <div class="row">
+      <div class="field"><span style="display:block;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:6px">Količina</span>
+        <div class="stepper">
+          <button type="button" id="eMinus" aria-label="Manje"><svg class="i"><use href="#i-minus"/></svg></button>
+          <input id="eQty" inputmode="decimal" aria-label="Količina">
+          <button type="button" id="ePlus" aria-label="Više"><svg class="i"><use href="#i-plus"/></svg></button>
+        </div>
+      </div>
+      <label class="field"><span>Jedinica</span>
+        <select class="inp" id="eUnit">
+          <option value="">kom</option><option>kg</option><option>g</option><option>l</option><option>ml</option><option>pak</option><option>kesa</option>
+        </select>
+      </label>
+    </div>
+    <label class="field"><span>Kategorija</span><select class="inp" id="eCat"></select></label>
+    <label class="field"><span>Lista</span><select class="inp" id="eList"></select></label>
+    <div class="actions">
+      <button type="button" class="btn danger" id="eDelete" aria-label="Obriši"><svg class="i"><use href="#i-trash"/></svg></button>
+      <button type="button" class="btn ghost" id="eCancel">Odustani</button>
+      <button type="submit" class="btn primary">Spremi</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Postavke -->
+<dialog id="setDlg">
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2>Postavke</h2>
+    <label class="field"><span>Tvoje ime (vide ga ostali uz artikle)</span><input class="inp" id="sName" placeholder="npr. Mama"></label>
+    <div class="sec">
+      <h3>Tema</h3>
+      <div class="seg" id="themeSeg">
+        <button data-t="auto">Automatski</button><button data-t="light">Svijetla</button><button data-t="dark">Tamna</button>
+      </div>
+    </div>
+    <div class="sec">
+      <h3>Liste</h3>
+      <div id="listRows"></div>
+      <form class="addlist" id="addListForm">
+        <input class="inp" id="newList" placeholder="Nova lista, npr. Pijaca" autocomplete="off">
+        <button class="btn" aria-label="Dodaj listu"><svg class="i"><use href="#i-plus"/></svg></button>
+      </form>
+    </div>
+    <div class="sec" id="installSec" hidden>
+      <h3>Instalacija</h3>
+      <button class="btn primary" id="btnInstall" style="width:100%">Instaliraj aplikaciju</button>
+    </div>
+    <p class="hint" id="iosHint" hidden>Na iPhoneu: u Safariju dodirni Dijeli, pa „Dodaj na početni zaslon”.</p>
+    <div class="actions"><button class="btn primary" id="sClose">Gotovo</button></div>
+  </div>
+</dialog>
+
+<!-- Ime pri prvom otvaranju -->
+<dialog id="nameDlg">
+  <form class="sheet" method="dialog" id="nameForm">
+    <div class="grab"></div>
+    <h2>Dobrodošli 👋</h2>
+    <p class="hint" style="margin:-8px 0 16px">Kako se zoveš? Ime se prikazuje uz artikle koje dodaš, da svi znaju ko je šta upisao.</p>
+    <label class="field"><span>Ime</span><input class="inp" id="nName" placeholder="npr. Tata" autocomplete="given-name"></label>
+    <div class="actions">
+      <button type="button" class="btn ghost" id="nSkip">Preskoči</button>
+      <button type="submit" class="btn primary">Nastavi</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Novi račun -->
+<dialog id="recDlg">
+  <form class="sheet" method="dialog" id="recForm">
+    <div class="grab"></div>
+    <h2>Spremi račun</h2>
+    <img class="preview" id="recPreview" alt="Pregled računa">
+    <div class="row">
+      <label class="field"><span>Gdje</span><select class="inp" id="recList"></select></label>
+      <label class="field"><span>Iznos (KM)</span><input class="inp" id="recAmount" inputmode="decimal" placeholder="neobavezno"></label>
+    </div>
+    <label class="field"><span>Bilješka</span><input class="inp" id="recNote" placeholder="neobavezno, npr. Bingo Mega"></label>
+    <div class="actions">
+      <button type="button" class="btn ghost" id="recCancel">Odustani</button>
+      <button type="submit" class="btn primary" id="recSave">Spremi račun</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Pregled računa -->
+<dialog id="viewer">
+  <div class="sheet">
+    <div class="vtop">
+      <button class="vbtn" id="vClose" aria-label="Zatvori"><svg class="i"><use href="#i-x"/></svg></button>
+      <div class="t"><b id="vTitle"></b><span id="vSub"></span></div>
+      <button class="vbtn" id="vDelete" aria-label="Obriši račun"><svg class="i"><use href="#i-trash"/></svg></button>
+    </div>
+    <div class="vimg"><img id="vImg" alt="Račun"></div>
+    <div class="vnote" id="vNote" hidden></div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status"><span id="toastMsg"></span><button id="toastBtn" hidden>Poništi</button></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+import {
+  initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+  collection, doc, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc, getDoc,
+  writeBatch, query, orderBy, limit
+} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC74cXbb_0vM16VFTuKg_7C2FBIhwcxzuc",
+  authDomain: "shoppingcart-58622.firebaseapp.com",
+  projectId: "shoppingcart-58622",
+  storageBucket: "shoppingcart-58622.firebasestorage.app",
+  messagingSenderId: "1009819359179",
+  appId: "1:1009819359179:web:7018cdd7728bb28210c84e"
+};
+
+const app = initializeApp(firebaseConfig);
+let db;
+try {
+  db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+} catch (e) {
+  db = initializeFirestore(app, {});
+}
+
+/* ---------- Kategorije (redoslijed kao kroz market) ---------- */
+const CATS = [
+  { id: 'voce',      name: 'Voće i povrće',          e: '🥬' },
+  { id: 'pekara',    name: 'Pekara',                 e: '🥖' },
+  { id: 'meso',      name: 'Meso i riba',            e: '🥩' },
+  { id: 'mlijecno',  name: 'Mliječno i jaja',        e: '🥛' },
+  { id: 'smocnica',  name: 'Namirnice',              e: '🥫' },
+  { id: 'smrznuto',  name: 'Smrznuto',               e: '❄️' },
+  { id: 'slatko',    name: 'Slatkiši i grickalice',  e: '🍫' },
+  { id: 'pice',      name: 'Piće',                   e: '🥤' },
+  { id: 'higijena',  name: 'Higijena i kozmetika',   e: '🧴' },
+  { id: 'kucna',     name: 'Kućna hemija',           e: '🧽' },
+  { id: 'zdravlje',  name: 'Lijekovi i zdravlje',    e: '💊' },
+  { id: 'ostalo',    name: 'Ostalo',                 e: '🛒' },
+];
+const CAT = Object.fromEntries(CATS.map(c => [c.id, c]));
+
+const KW = {
+  voce: 'jabuk|banan|krušk|narandž|naranč|limun|grožđ|jagod|kivi|avokad|paradajz|rajčic|krastav|paprik|luk|bijeli luk|mladi luk|krompir|krumpir|mrkv|kupus|salat|spanać|špinat|tikvic|patlidžan|brokul|karfiol|cvjetač|gljiv|šampinjon|peršun|mirođij|lubenic|dinj|šljiv|breskv|kajsij|marelic|trešnj|višnj|mandarin|grejp|ananas|mango|celer|rotkvic|cvekl|blitv|poriluk|đumbir|voće|povrć|malin|borovnic|kupin|nar|smokv|kesten|bundev|rukol|matovilac|kelj|grašak|boranij|mahun',
+  pekara: 'hljeb|hleb|kruh|pecivo|peciv|kifl|burek|pita|somun|lepinj|tost|baget|kroasan|krofn|tortilj|zemičk|pogač|kolač|torta|rolat|perec',
+  meso: 'meso|mesa|piletin|pileć|pile|junetin|junec|teletin|svinj|mljeven|kobasic|sudžuk|suho meso|suhog mesa|pršut|šunk|salam|hrenovk|pašteta|paštet|viršl|ćevap|pljeskavic|file|batak|krilc|bataci|riba|ribu|tun|losos|oslić|sardin|škamp|lignj|slanin|mortadel|pureć|puretin|ćuretin|ćuft|odrezak|šnicl|kotlet|janjetin|ovčetin|jetric|dimljen',
+  mlijecno: 'mlijek|mleko|jogurt|kefir|sir|sirni|pavlak|vrhnj|kajmak|maslac|puter|margarin|jaja|jaje|mozzarel|mocarel|gaud|edamer|trapist|parmezan|feta|ricott|mascarpon|kisel mlijek|kiselo mlijeko|mileram|namaz|zdenk|lino lada',
+  smocnica: 'brašn|šećer|so|sol|ulje|ocat|sirće|riž|riza|rizi|tjestenin|testenin|makaron|špaget|njok|griz|palent|zob|pahuljic|musli|corn flakes|kukuruz|grah|pasulj|leć|slanutak|konzerv|kečap|majonez|senf|pelat|sos|začin|biber|papar|vegeta|origano|cimet|vanilin|prašak za pecivo|kvasac|med|džem|marmelad|nutel|eurokrem|čaj|kafa|kava|kakao|nes|supa|juha|kocka|ajvar|maslin|pekmez|puding|šlag|krem bananica|keks za tortu|mrvic|prezle|tahan|humus|kokos|pahulj|lovor|kim|paprika mljevena',
+  smrznuto: 'smrznut|zamrznut|pomfrit|sladoled|led za|kocke leda|ledene kocke|pizza|pica',
+  slatko: 'čokolad|bombon|keks|napolitank|smoki|čips|chips|flips|kokic|bajader|bananic|grickal|štapić|kikiriki|lješnjak|orah|orasi|badem|sjemenk|koštic|gumene|žvak|kinder|milka|oreo|plazma|jaffa|domaćic|krem|mars|snickers|twix|bounty|lizal|halv|ratluk|baklav|kroki|pistać',
+  pice: 'voda|vode|sok|soka|coca|cola|kola|pepsi|fanta|sprite|schweppes|pivo|piva|vino|mineraln|kisela voda|energet|red bull|ledeni čaj|rakij|sirup|cedevit|limunad|cockta|jana|sarajevski kiseljak|tonic|tonik|ayran|ajran',
+  higijena: 'šampon|sapun|gel za tuš|tuš gel|pasta za zube|zubna pasta|četkic|dezodoran|deo|krema|kremu|losion|brijač|žilet|pjena za brij|uložak|ulošci|uloške|tampon|pelen|vlažne maramic|maramic|toalet papir|wc papir|papir|vat|štapići za uši|lak za kosu|balzam|regenerator|parfem|šminka|maskar|ruž|kolonjsk|higijen|kupka|gel za kosu|boja za kosu|lakiranje|odstranjivač|vazelin|zubni konac|vodica za usta|kontakt|nivea|labello|pinceta',
+  kucna: 'sapun za suđe|deterdžent za suđe|deterdžent|omekšivač|prašak za veš|prašak za rublje|tablete za suđe|tablete za mašinu|sredstvo|jelen|fairy|varikin|domestos|cif|spužv|krpa|krpe|kes|vreće za smeće|kese za smeće|folij|alu folij|papirni ubrus|ubrus|osvježivač|sijalic|žarulj|baterij|sjaj|so za mašinu|sol za mašinu|čačkalic|salvet|svijeć|šibic|upaljač|rukavic|wc blok|wc gel|mop|metl|ariel|persil|vanish|calgon|finish|ornel',
+  zdravlje: 'lijek|tablet|sirup za kašalj|kapi|vitamin|magnezij|cink|brufen|paracetamol|aspirin|andol|kaffetin|caffetin|flaster|zavoj|toplomjer|termometar|probiotik|sprej za nos|ibuprofen|nurofen|ljekovit|lekovit|omega|kolagen|elektrolit|ulje za sunčanje|krema za sunčanje|kondom|test za trudnoć|gaze|antibiotik|kortikost|febricet|panadol|lineks|linex|bepanthen|strepsils|ferrum|ampule|kapsul',
+};
+const strip = s => s.toLowerCase().replace(/đ/g, 'dj').normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+const KWLIST = Object.entries(KW).map(([cat, s]) => [cat, s.split('|').map(strip)]);
+let catMemory = {}; // naučene kategorije (kad neko ručno promijeni)
+
+function categorize(name) {
+  const n = strip(name);
+  if (catMemory[n]) return catMemory[n];
+  const words = n.split(/[^a-z0-9]+/).filter(Boolean);
+  // Prva riječ je najvažnija ("sok od narandže" je piće, ne voće)
+  let best = 'ostalo', bl = 0;
+  for (const [cat, list] of KWLIST) {
+    for (const kw of list) {
+      let score = 0;
+      if (kw.includes(' ')) { const i = n.indexOf(kw); if (i >= 0) score = kw.length + (i === 0 ? 20 : 0); }
+      else if (words[0]?.startsWith(kw)) score = kw.length + 20;
+      else if (words.some(w => w.startsWith(kw))) score = kw.length;
+      if (score > bl) { best = cat; bl = score; }
+    }
+  }
+  return best;
+}
+
+/* ---------- Stanje ---------- */
+const DEFAULT_LISTS = [
+  { id: 'market', name: 'Market', order: 1 },
+  { id: 'apoteka', name: 'Apoteka', order: 2 },
+  { id: 'dm', name: 'dm', order: 3 },
+];
+const S = {
+  items: [], lists: DEFAULT_LISTS.slice(), receipts: [],
+  loaded: false,
+  cur: localStorage.getItem('sc-list') || 'market',
+  view: 'list',
+  doneOpen: localStorage.getItem('sc-done') !== '0',
+};
+const LS = {
+  get name() { try { return localStorage.getItem('sc-name') || ''; } catch { return ''; } },
+  set name(v) { try { localStorage.setItem('sc-name', v); } catch {} },
+};
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmtNum = n => (Math.round(n * 100) / 100).toString().replace('.', ',');
+const qtyLabel = it => {
+  const q = Number(it.qty) || 1;
+  if (it.unit) return `${fmtNum(q)} ${it.unit}`;
+  return q !== 1 ? `×${fmtNum(q)}` : '';
+};
+const cap = s => s.charAt(0).toLocaleUpperCase('bs') + s.slice(1);
+const vibrate = ms => { try { navigator.vibrate?.(ms); } catch {} };
+
+function ago(ts) {
+  if (!ts) return '';
+  const d = (Date.now() - ts) / 1000;
+  if (d < 60) return 'upravo';
+  if (d < 3600) return `prije ${Math.floor(d / 60)} min`;
+  if (d < 86400) return `prije ${Math.floor(d / 3600)} h`;
+  const dt = new Date(ts), y = new Date(); y.setDate(y.getDate() - 1);
+  if (dt.toDateString() === y.toDateString()) return 'jučer';
+  return dt.toLocaleDateString('bs-BA', { day: 'numeric', month: 'numeric' });
+}
+const MONTHS = ['januar','februar','mart','april','maj','juni','juli','august','septembar','oktobar','novembar','decembar'];
+const fmtDate = ts => { const d = new Date(ts); return `${d.getDate()}. ${MONTHS[d.getMonth()]} ${d.getFullYear()}.`; };
+const fmtTime = ts => new Date(ts).toLocaleTimeString('bs-BA', { hour: '2-digit', minute: '2-digit' });
+
+/* ---------- Parsiranje unosa: "mlijeko 2", "2x jaja", "1 kg jabuke" ---------- */
+const UNIT = '(kom|komada|kg|g|gr|l|lit|litra|ml|pak|paket|kesa|kesu)';
+const UNITMAP = { kom: '', komada: '', gr: 'g', lit: 'l', litra: 'l', paket: 'pak', kesu: 'kesa' };
+function parseEntry(raw) {
+  let s = raw.trim().replace(/\s+/g, ' ');
+  let qty = 1, unit = '';
+  let m = s.match(new RegExp(`^(\\d+(?:[.,]\\d+)?)\\s*(?:x|×)?\\s*${UNIT}?\\.?\\s+(.+)$`, 'i'));
+  if (m) { qty = parseFloat(m[1].replace(',', '.')); unit = (m[2] || '').toLowerCase(); s = m[3]; }
+  else {
+    m = s.match(new RegExp(`^(.+?)\\s+(?:x|×)?\\s*(\\d+(?:[.,]\\d+)?)\\s*(?:x|×)?\\s*${UNIT}?\\.?$`, 'i'));
+    if (m) { s = m[1]; qty = parseFloat(m[2].replace(',', '.')); unit = (m[3] || '').toLowerCase(); }
+  }
+  if (unit in UNITMAP) unit = UNITMAP[unit];
+  if (!unit && qty > 99) { s = raw.trim(); qty = 1; } // npr. "Vitamin C 1000"
+  return { name: cap(s), qty: qty || 1, unit };
+}
+
+/* ---------- Firestore ---------- */
+const col = name => collection(db, name);
+function onErr(e) {
+  console.error(e);
+  const b = $('banner');
+  b.hidden = false;
+  b.textContent = e.code === 'permission-denied'
+    ? 'Baza ne dozvoljava pristup. U Firebase konzoli otvori Firestore → Rules i postavi pravila (vidi upute).'
+    : 'Problem s bazom: ' + (e.message || e);
+}
+
+onSnapshot(col('items'), snap => {
+  S.items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  S.loaded = true;
+  $('banner').hidden = true;
+  renderAll();
+}, onErr);
+
+onSnapshot(col('lists'), snap => {
+  if (snap.empty) {
+    if (!snap.metadata.fromCache) DEFAULT_LISTS.forEach(l => setDoc(doc(db, 'lists', l.id), { name: l.name, order: l.order }));
+    return;
+  }
+  S.lists = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.order || 0) - (b.order || 0));
+  if (!S.lists.find(l => l.id === S.cur)) S.cur = S.lists[0].id;
+  renderAll();
+}, onErr);
+
+onSnapshot(col('catMemory'), snap => {
+  catMemory = {};
+  snap.docs.forEach(d => { catMemory[d.id] = d.data().cat; });
+}, () => {});
+
+onSnapshot(query(col('receipts'), orderBy('createdAt', 'desc'), limit(120)), snap => {
+  S.receipts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderReceipts();
+}, onErr);
+
+/* ---------- Render ---------- */
+const curList = () => S.lists.find(l => l.id === S.cur) || S.lists[0];
+const listName = id => (S.lists.find(l => l.id === id) || {}).name || '';
+
+function renderAll() { renderChips(); renderItems(); renderSuggest(); if ($('setDlg').open) renderListRows(); }
+
+function renderChips() {
+  const counts = {};
+  S.items.forEach(i => { if (!i.done) counts[i.list] = (counts[i.list] || 0) + 1; });
+  $('chips').innerHTML = S.lists.map(l => `
+    <button class="chip" data-list="${esc(l.id)}" aria-pressed="${l.id === S.cur}">
+      ${esc(l.name)}<span class="n">${counts[l.id] || 0}</span>
+    </button>`).join('') +
+    `<button class="chip add" id="chipAdd" aria-label="Nova lista"><svg class="i"><use href="#i-plus"/></svg></button>`;
+}
+
+function itemHTML(it) {
+  const who = [it.by, ago(it.done ? it.doneAt : it.createdAt)].filter(Boolean).join(' · ');
+  const q = qtyLabel(it);
+  return `<li class="item${it.done ? ' on' : ''}" data-id="${esc(it.id)}">
+    <button class="check" aria-label="${it.done ? 'Vrati na listu' : 'Označi kupljeno'}"><span><svg class="i"><use href="#i-check"/></svg></span></button>
+    <button class="body"><span class="name">${esc(it.name)}</span>${who ? `<span class="meta">${it.done ? 'Uzeo/la ' : ''}${esc(who)}</span>` : ''}</button>
+    ${q ? `<span class="qty">${esc(q)}</span>` : ''}
+  </li>`;
+}
+
+function renderItems() {
+  const inList = S.items.filter(i => i.list === S.cur);
+  const todo = inList.filter(i => !i.done);
+  const done = inList.filter(i => i.done).sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0));
+  const n = todo.length;
+  $('subtitle').textContent = !S.loaded ? 'Učitavam…'
+    : n === 0 ? `${curList()?.name || ''}: sve je kupljeno`
+    : `${curList()?.name || ''}: ${n} ${n % 10 === 1 && n % 100 !== 11 ? 'artikal' : 'artikala'} za kupiti`;
+
+  if (!S.loaded) return;
+  if (!todo.length) {
+    $('groups').innerHTML = `<div class="empty"><div class="big"><svg class="i"><use href="#i-check"/></svg></div>
+      <h3>${done.length ? 'Sve je u korpi' : 'Lista je prazna'}</h3>
+      <p>${done.length ? 'Svaka čast! Očisti korpu kad završiš.' : 'Upiši šta treba kupiti i svi će odmah vidjeti.'}</p></div>`;
+  } else {
+    const by = {};
+    todo.forEach(i => { const c = CAT[i.cat] ? i.cat : 'ostalo'; (by[c] ||= []).push(i); });
+    $('groups').innerHTML = CATS.filter(c => by[c.id]).map(c => {
+      const arr = by[c.id].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+      return `<section class="group"><div class="ghead"><span class="e">${c.e}</span>${esc(c.name)}<span class="c">${arr.length}</span></div>
+        <ul class="card">${arr.map(itemHTML).join('')}</ul></section>`;
+    }).join('');
+  }
+
+  $('doneSec').hidden = !done.length;
+  $('doneSec').classList.toggle('closed', !S.doneOpen);
+  $('doneTitle').textContent = `U korpi (${done.length})`;
+  $('doneList').innerHTML = done.map(itemHTML).join('');
+}
+
+function renderSuggest() {
+  const seen = new Set(), out = [];
+  [...S.items].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).forEach(i => {
+    const k = strip(i.name); if (!seen.has(k)) { seen.add(k); out.push(i.name); }
+  });
+  $('suggest').innerHTML = out.slice(0, 60).map(n => `<option value="${esc(n)}">`).join('');
+}
+
+function renderReceipts() {
+  const R = S.receipts;
+  const now = new Date();
+  const thisMonth = R.filter(r => { const d = new Date(r.createdAt); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); });
+  const sum = thisMonth.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+  $('rsummary').textContent = R.length
+    ? `${R.length} ${R.length % 10 === 1 && R.length % 100 !== 11 ? 'račun' : (R.length % 10 >= 2 && R.length % 10 <= 4 && (R.length % 100 < 12 || R.length % 100 > 14)) ? 'računa' : 'računa'}${sum ? ` · ovaj mjesec ${fmtNum(sum)} KM` : ''}`
+    : '';
+  if (!R.length) {
+    $('receipts').innerHTML = `<div class="empty"><div class="big"><svg class="i"><use href="#i-receipt"/></svg></div>
+      <h3>Još nema računa</h3><p>Nakon kupovine uslikaj račun i bit će spremljen ovdje.</p></div>`;
+    return;
+  }
+  const groups = [];
+  R.forEach(r => {
+    const d = new Date(r.createdAt), key = `${d.getFullYear()}-${d.getMonth()}`;
+    let g = groups.find(x => x.key === key);
+    if (!g) groups.push(g = { key, label: `${cap(MONTHS[d.getMonth()])} ${d.getFullYear()}`, items: [], sum: 0 });
+    g.items.push(r); g.sum += Number(r.amount) || 0;
+  });
+  $('receipts').innerHTML = groups.map(g => `
+    <div class="month"><span>${g.label}</span>${g.sum ? `<span>${fmtNum(g.sum)} KM</span>` : ''}</div>
+    <div class="grid">${g.items.map(r => `
+      <button class="rcard" data-rid="${esc(r.id)}">
+        <div class="ph" style="background-image:url('${r.thumb}')"></div>
+        <div class="rb">
+          <div class="rt"><span>${esc(r.listName || 'Račun')}</span>${r.amount ? `<span>${fmtNum(Number(r.amount))} KM</span>` : ''}</div>
+          <div class="rs">${new Date(r.createdAt).getDate()}. ${MONTHS[new Date(r.createdAt).getMonth()].slice(0, 3)} · ${fmtTime(r.createdAt)}${r.note ? ' · ' + esc(r.note) : ''}</div>
+        </div>
+      </button>`).join('')}</div>`).join('');
+}
+
+/* ---------- Akcije: artikli ---------- */
+$('addForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const raw = $('addInput').value;
+  if (!raw.trim()) return;
+  $('addInput').value = '';
+  const p = parseEntry(raw);
+  const existing = S.items.find(i => i.list === S.cur && !i.done && strip(i.name) === strip(p.name) && (i.unit || '') === p.unit);
+  if (existing) {
+    await updateDoc(doc(db, 'items', existing.id), { qty: (Number(existing.qty) || 1) + p.qty });
+    toast(`${existing.name}: količina povećana`);
+    return;
+  }
+  addDoc(col('items'), {
+    name: p.name, qty: p.qty, unit: p.unit, cat: categorize(p.name),
+    list: S.cur, done: false, by: LS.name, createdAt: Date.now(), doneAt: null,
+  }).catch(onErr);
+});
+
+function onListClick(e) {
+  const li = e.target.closest('.item'); if (!li) return;
+  const it = S.items.find(i => i.id === li.dataset.id); if (!it) return;
+  if (e.target.closest('.check')) {
+    vibrate(12);
+    if (!it.done) {
+      li.classList.add('checking');
+      setTimeout(() => updateDoc(doc(db, 'items', it.id), { done: true, doneAt: Date.now(), doneBy: LS.name }).catch(onErr), 280);
+    } else {
+      updateDoc(doc(db, 'items', it.id), { done: false, doneAt: null }).catch(onErr);
+    }
+  } else if (e.target.closest('.body')) {
+    openEdit(it);
+  }
+}
+$('groups').addEventListener('click', onListClick);
+$('doneList').addEventListener('click', onListClick);
+
+$('doneToggle').addEventListener('click', () => {
+  S.doneOpen = !S.doneOpen;
+  try { localStorage.setItem('sc-done', S.doneOpen ? '1' : '0'); } catch {}
+  $('doneSec').classList.toggle('closed', !S.doneOpen);
+});
+
+$('clearDone').addEventListener('click', async () => {
+  const done = S.items.filter(i => i.list === S.cur && i.done);
+  if (!done.length) return;
+  const batch = writeBatch(db);
+  done.forEach(i => batch.delete(doc(db, 'items', i.id)));
+  await batch.commit().catch(onErr);
+  toast(`Obrisano ${done.length} iz korpe`, 'Poništi', async () => {
+    const b = writeBatch(db);
+    done.forEach(({ id, ...data }) => b.set(doc(db, 'items', id), data));
+    await b.commit();
+  });
+});
+
+/* Uredi artikal */
+let editing = null;
+$('eCat').innerHTML = CATS.map(c => `<option value="${c.id}">${c.e}  ${c.name}</option>`).join('');
+function openEdit(it) {
+  editing = it;
+  $('eName').value = it.name;
+  $('eQty').value = fmtNum(Number(it.qty) || 1);
+  $('eUnit').value = it.unit || '';
+  $('eCat').value = CAT[it.cat] ? it.cat : 'ostalo';
+  $('eList').innerHTML = S.lists.map(l => `<option value="${esc(l.id)}">${esc(l.name)}</option>`).join('');
+  $('eList').value = it.list;
+  $('editDlg').showModal();
+  document.activeElement?.blur(); // bez automatske tastature
+}
+const stepQty = d => {
+  const unit = $('eUnit').value;
+  const step = unit === 'g' || unit === 'ml' ? 100 : unit === 'kg' || unit === 'l' ? 0.5 : 1;
+  const v = parseFloat($('eQty').value.replace(',', '.')) || 0;
+  $('eQty').value = fmtNum(Math.max(step, v + d * step));
+};
+$('eMinus').addEventListener('click', () => stepQty(-1));
+$('ePlus').addEventListener('click', () => stepQty(1));
+$('eCancel').addEventListener('click', () => $('editDlg').close());
+$('editForm').addEventListener('submit', e => {
+  e.preventDefault();
+  if (!editing) return;
+  const name = cap($('eName').value.trim()) || editing.name;
+  const cat = $('eCat').value;
+  const data = {
+    name, cat, list: $('eList').value, unit: $('eUnit').value,
+    qty: parseFloat($('eQty').value.replace(',', '.')) || 1,
+  };
+  updateDoc(doc(db, 'items', editing.id), data).catch(onErr);
+  if (cat !== editing.cat || cat !== categorize(name)) setDoc(doc(db, 'catMemory', strip(name)), { cat }).catch(() => {});
+  $('editDlg').close();
+});
+$('eDelete').addEventListener('click', async () => {
+  if (!editing) return;
+  const { id, ...data } = editing;
+  $('editDlg').close();
+  await deleteDoc(doc(db, 'items', id)).catch(onErr);
+  toast(`Obrisano: ${data.name}`, 'Poništi', () => setDoc(doc(db, 'items', id), data));
+});
+
+/* ---------- Liste ---------- */
+$('chips').addEventListener('click', e => {
+  if (e.target.closest('#chipAdd')) { openSettings(true); return; }
+  const c = e.target.closest('.chip[data-list]'); if (!c) return;
+  S.cur = c.dataset.list;
+  try { localStorage.setItem('sc-list', S.cur); } catch {}
+  if (S.view !== 'list') setView('list');
+  renderAll();
+  c.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+});
+
+function renderListRows() {
+  $('listRows').innerHTML = S.lists.map(l => {
+    const n = S.items.filter(i => i.list === l.id && !i.done).length;
+    return `<div class="lrow"><span class="ln">${esc(l.name)}</span><span class="lc">${n} za kupiti</span>
+      <button data-del="${esc(l.id)}" aria-label="Obriši listu ${esc(l.name)}"><svg class="i"><use href="#i-trash"/></svg></button></div>`;
+  }).join('');
+}
+$('listRows').addEventListener('click', async e => {
+  const b = e.target.closest('[data-del]'); if (!b) return;
+  if (S.lists.length <= 1) { toast('Mora ostati bar jedna lista'); return; }
+  const l = S.lists.find(x => x.id === b.dataset.del);
+  const its = S.items.filter(i => i.list === l.id);
+  if (!confirm(`Obrisati listu „${l.name}”${its.length ? ` i ${its.length} artikala u njoj` : ''}?`)) return;
+  const batch = writeBatch(db);
+  batch.delete(doc(db, 'lists', l.id));
+  its.forEach(i => batch.delete(doc(db, 'items', i.id)));
+  await batch.commit().catch(onErr);
+});
+$('addListForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const name = $('newList').value.trim(); if (!name) return;
+  $('newList').value = '';
+  const order = Math.max(0, ...S.lists.map(l => l.order || 0)) + 1;
+  const ref = await addDoc(col('lists'), { name: cap(name), order }).catch(onErr);
+  if (ref) { S.cur = ref.id; try { localStorage.setItem('sc-list', S.cur); } catch {} }
+});
+
+/* ---------- Postavke ---------- */
+function openSettings(focusList) {
+  $('sName').value = LS.name;
+  renderListRows();
+  syncThemeSeg();
+  $('setDlg').showModal();
+  if (focusList) setTimeout(() => $('newList').focus(), 150);
+}
+$('btnSettings').addEventListener('click', () => openSettings(false));
+$('sClose').addEventListener('click', () => $('setDlg').close());
+$('setDlg').addEventListener('close', () => { LS.name = $('sName').value.trim(); });
+
+function applyTheme() {
+  let t = 'auto'; try { t = localStorage.getItem('sc-theme') || 'auto'; } catch {}
+  if (t === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
+  const dark = t === 'dark' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+  $('themeColor').content = dark ? '#111311' : '#f5f3ee';
+}
+function syncThemeSeg() {
+  let t = 'auto'; try { t = localStorage.getItem('sc-theme') || 'auto'; } catch {}
+  $('themeSeg').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.t === t));
+}
+$('themeSeg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  try { localStorage.setItem('sc-theme', b.dataset.t); } catch {}
+  applyTheme(); syncThemeSeg();
+});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+applyTheme();
+
+/* Ime pri prvom otvaranju */
+if (!localStorage.getItem('sc-name') && !localStorage.getItem('sc-asked')) {
+  setTimeout(() => $('nameDlg').showModal(), 400);
+}
+$('nameForm').addEventListener('submit', () => { LS.name = $('nName').value.trim(); localStorage.setItem('sc-asked', '1'); });
+$('nSkip').addEventListener('click', () => { localStorage.setItem('sc-asked', '1'); $('nameDlg').close(); });
+
+/* ---------- Pogledi ---------- */
+function setView(v) {
+  S.view = v;
+  $('viewList').hidden = v !== 'list';
+  $('viewReceipts').hidden = v !== 'receipts';
+  $('fab').hidden = v !== 'receipts';
+  $('chips').hidden = v !== 'list';
+  $('navList').toggleAttribute('aria-current', v === 'list');
+  $('navReceipts').toggleAttribute('aria-current', v === 'receipts');
+  if (v === 'list') $('navList').setAttribute('aria-current', 'page'); else $('navReceipts').setAttribute('aria-current', 'page');
+  $('subtitle').textContent = v === 'list' ? $('subtitle').textContent : 'Arhiva računa';
+  if (v === 'list') renderItems();
+  scrollTo({ top: 0 });
+}
+$('navList').addEventListener('click', () => setView('list'));
+$('navReceipts').addEventListener('click', () => setView('receipts'));
+
+/* ---------- Računi ---------- */
+let pending = null;
+$('fab').addEventListener('click', () => $('camInput').click());
+$('camInput').addEventListener('change', async e => {
+  const file = e.target.files[0]; e.target.value = '';
+  if (!file) return;
+  try {
+    toast('Pripremam sliku…');
+    pending = await compress(file);
+    $('recPreview').src = pending.data;
+    $('recList').innerHTML = S.lists.map(l => `<option value="${esc(l.id)}">${esc(l.name)}</option>`).join('');
+    $('recList').value = S.cur;
+    $('recAmount').value = ''; $('recNote').value = '';
+    hideToast();
+    $('recDlg').showModal();
+    document.activeElement?.blur();
+  } catch (err) { console.error(err); toast('Ne mogu učitati sliku'); }
+});
+$('recCancel').addEventListener('click', () => { pending = null; $('recDlg').close(); });
+$('recForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!pending) return;
+  $('recSave').disabled = true;
+  const ref = doc(col('receipts'));
+  const amount = parseFloat($('recAmount').value.replace(',', '.'));
+  const batch = writeBatch(db);
+  batch.set(doc(db, 'receiptImages', ref.id), { img: pending.data });
+  batch.set(ref, {
+    thumb: pending.thumb, list: $('recList').value, listName: listName($('recList').value),
+    amount: isFinite(amount) ? amount : null, note: $('recNote').value.trim(),
+    by: LS.name, createdAt: Date.now(),
+  });
+  // Ne čekamo server — offline se sinhronizuje kasnije
+  batch.commit().then(() => {}).catch(onErr);
+  pending = null;
+  $('recSave').disabled = false;
+  $('recDlg').close();
+  toast('Račun spremljen');
+});
+
+function loadImage(file) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { res(img); setTimeout(() => URL.revokeObjectURL(url), 1000); };
+    img.onerror = rej;
+    img.src = url;
+  });
+}
+function toJpeg(img, max, q) {
+  const sc = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement('canvas');
+  c.width = Math.round(img.naturalWidth * sc); c.height = Math.round(img.naturalHeight * sc);
+  const x = c.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+  x.drawImage(img, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', q);
+}
+async function compress(file) {
+  const img = await loadImage(file);
+  let max = 1600, q = 0.72, data = toJpeg(img, max, q);
+  while (data.length > 850000 && max > 700) { max -= 250; q = Math.max(0.5, q - 0.05); data = toJpeg(img, max, q); }
+  return { data, thumb: toJpeg(img, 360, 0.6) };
+}
+
+let viewing = null;
+$('receipts').addEventListener('click', async e => {
+  const c = e.target.closest('[data-rid]'); if (!c) return;
+  const r = S.receipts.find(x => x.id === c.dataset.rid); if (!r) return;
+  viewing = r;
+  $('vTitle').textContent = `${r.listName || 'Račun'}${r.amount ? ' · ' + fmtNum(Number(r.amount)) + ' KM' : ''}`;
+  $('vSub').textContent = `${fmtDate(r.createdAt)} u ${fmtTime(r.createdAt)}${r.by ? ' · ' + r.by : ''}`;
+  $('vNote').hidden = !r.note; $('vNote').textContent = r.note || '';
+  $('vImg').src = r.thumb;
+  $('viewer').showModal();
+  try {
+    const snap = await getDoc(doc(db, 'receiptImages', r.id));
+    if (snap.exists() && viewing?.id === r.id) $('vImg').src = snap.data().img;
+  } catch (err) { console.warn(err); }
+});
+$('vClose').addEventListener('click', () => $('viewer').close());
+$('vDelete').addEventListener('click', async () => {
+  if (!viewing || !confirm('Obrisati ovaj račun?')) return;
+  const b = writeBatch(db);
+  b.delete(doc(db, 'receipts', viewing.id));
+  b.delete(doc(db, 'receiptImages', viewing.id));
+  $('viewer').close();
+  await b.commit().catch(onErr);
+  toast('Račun obrisan');
+});
+
+/* Zatvaranje sheet-a klikom na pozadinu */
+document.querySelectorAll('dialog').forEach(d => d.addEventListener('click', e => {
+  if (e.target === d && d.id !== 'nameDlg') d.close();
+}));
+
+/* ---------- Toast ---------- */
+let toastT;
+function toast(msg, action, fn) {
+  $('toastMsg').textContent = msg;
+  const b = $('toastBtn');
+  b.hidden = !action;
+  if (action) { b.textContent = action; b.onclick = () => { hideToast(); fn(); }; }
+  $('toast').classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(hideToast, action ? 5000 : 2500);
+}
+function hideToast() { $('toast').classList.remove('show'); }
+
+/* ---------- Offline indikator ---------- */
+const net = () => { $('offline').hidden = navigator.onLine; };
+addEventListener('online', net); addEventListener('offline', net); net();
+
+/* ---------- Osvježavanje "prije X min" ---------- */
+setInterval(() => { if (S.view === 'list' && !document.querySelector('dialog[open]')) renderItems(); }, 60000);
+
+/* ---------- Instalacija ---------- */
+let installEvt = null;
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; $('installSec').hidden = false; });
+$('btnInstall').addEventListener('click', async () => {
+  if (!installEvt) return;
+  installEvt.prompt(); await installEvt.userChoice; installEvt = null; $('installSec').hidden = true;
+});
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const standalone = matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches || navigator.standalone;
+if (isIOS && !standalone) $('iosHint').hidden = false;
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+
+renderAll();
+</script>
+</body>
+</html>
